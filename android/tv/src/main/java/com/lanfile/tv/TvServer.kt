@@ -34,7 +34,7 @@ class TvServer(
         private const val TAG = "TvServer"
 
         /**
-         * 追加一行诊断日志到文件（VIDAA 等定制系统会屏蔽 logcat 应用日志，
+         * 追加一行诊断日志到文件（部分定制电视系统会屏蔽 logcat 应用日志，
          * 落盘是唯一可靠的现场取证手段）。
          */
         @Volatile
