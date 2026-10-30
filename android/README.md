@@ -89,7 +89,7 @@ bash build/build.sh --clean    # 先 clean 再编译
 ```
 
 `build/build.sh` 会自动定位 JDK / Gradle / Android SDK，并**动态探测代理**：
-沙箱代理端口会随会话漂移，写死会报 `Connect to 127.0.0.1:xxxxx failed: Connection refused`，
+代理端口可能随环境漂移，写死会报 `Connect to 127.0.0.1:xxxxx failed: Connection refused`，
 脚本会在构建前探测代理是否真的能出数据，不能则自动直连。
 
 ### 产物
@@ -129,7 +129,7 @@ Maven 版 `org.json:json` 替代（API 兼容）。
 
 ### 5.3 真机联调（已在真机通过）
 
-在真实电视设备（VIDAA_TV / Android 9，IP `192.168.50.189`）上完成验证：
+在真实电视设备（Android 9，IP `192.168.1.100`）上完成验证：
 
 | 验证项 | 结果 |
 |--------|------|
@@ -144,12 +144,12 @@ Maven 版 `org.json:json` 替代（API 兼容）。
 
 ```bash
 # 需电视已开启网络 ADB（5555）并在屏幕确认授权
-bash ../live_verify.sh 192.168.50.189
+bash ../live_verify.sh 192.168.1.100
 ```
 
 ### 5.4 排障：设备屏蔽应用 logcat
 
-部分定制 ROM（如 VIDAA）会**完全屏蔽第三方应用的 logcat 输出**，
+部分定制电视 ROM 会**完全屏蔽第三方应用的 logcat 输出**，
 `adb logcat | grep <TAG>` 查不到任何内容。此时改用**文件日志**取证：
 
 电视端会把关键状态写入 `<外部私有目录>/tvserver-diag.log`

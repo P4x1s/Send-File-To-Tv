@@ -10,9 +10,23 @@
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-B="${WORKBUDDY_BIN:-/c/Users/Administrator/.workbuddy/binaries}"
-JAVA="$B/jdk17/jdk-17.0.21.0.2+1/bin/java.exe"
-PY="C:/Users/Administrator/.workbuddy/binaries/python/versions/3.13.12/python.exe"
+
+# 工具链定位：优先 JAVA_HOME / PATH，其次 $TOOLS_HOME
+find_java() {
+  if [ -n "${JAVA_HOME:-}" ] && [ -x "$JAVA_HOME/bin/java.exe" ]; then echo "$JAVA_HOME/bin/java.exe"; return; fi
+  if [ -n "${JAVA_HOME:-}" ] && [ -x "$JAVA_HOME/bin/java" ]; then echo "$JAVA_HOME/bin/java"; return; fi
+  if command -v java >/dev/null 2>&1; then command -v java; return; fi
+  for c in "$TOOLS_HOME"/jdk17/*/bin/java.exe; do [ -x "$c" ] && { echo "$c"; return; }; done
+}
+find_python() {
+  if command -v python >/dev/null 2>&1; then command -v python; return; fi
+  if command -v python3 >/dev/null 2>&1; then command -v python3; return; fi
+  for c in "$TOOLS_HOME"/python/versions/*/python.exe; do [ -x "$c" ] && { echo "$c"; return; }; done
+}
+JAVA="$(find_java)"
+PY="$(find_python)"
+[ -n "$JAVA" ] || { echo "[FAIL] 找不到 java（请设置 JAVA_HOME 或 TOOLS_HOME）"; exit 1; }
+[ -n "$PY" ]   || { echo "[FAIL] 找不到 python（请设置 TOOLS_HOME）"; exit 1; }
 
 OUT_DIR="${1:-/tmp/lan_kotlin_verify}"
 PORT="${2:-19527}"

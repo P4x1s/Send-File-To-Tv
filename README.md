@@ -52,9 +52,9 @@
 
 ---
 
-## 二、真机验证结果（VIDAA_TV / Android 9）
+## 二、真机验证结果（Android 9 电视设备）
 
-在真实电视设备（VIDAA_TV，Android 9，IP `192.168.50.189`）上完成的端到端验证：
+在真实电视设备（Android 9，IP `192.168.1.100`）上完成的端到端验证：
 
 | 验证项 | 结果 |
 |--------|------|
@@ -80,8 +80,8 @@
 | **大量文件（60 个）** | ✅ **60/60 成功**，8.6s；`/api/files` 清单**按时间倒序**，最新上传的排在最前面 |
 | **源码级一致性** | ✅ JVM harness 跑**真实 Kotlin `HttpUploadServer`**，同样 22/22 全绿 |
 
-> 电视端已通过 `adb connect 192.168.50.189:5555` 直连安装 APK 完成全部验证。
-> 压测复现：`python stress_test.py --host 192.168.50.189 --port 9527 --adb 192.168.50.189:5555`
+> 电视端已通过 `adb connect 192.168.1.100:5555` 直连安装 APK 完成全部验证。
+> 压测复现：`python stress_test.py --host 192.168.1.100 --port 9527 --adb 192.168.1.100:5555`
 
 ---
 
@@ -110,7 +110,7 @@ LanFileTransfer/
 ### 电视端（接收）
 ```bash
 python tv_receiver.py                         # 默认 0.0.0.0，接收目录 ./received
-python tv_receiver.py --out-dir D:/recv --name "客厅电视"
+python tv_receiver.py --out-dir ./received --name "客厅电视"
 python tv_receiver.py --host 127.0.0.1        # 仅本机环回，便于联调
 ```
 
@@ -136,7 +136,7 @@ python phone_sender.py --threads 16 *.iso       # 指定并发数
 - **Android NSD**：手机端用 `NsdManager` 发现 `_lanfile._tcp.` 服务，TXT 记录带 `dp`（数据端口）与 `hp`（HTTP 端口）。
 - **UDP 广播**：电视端每 3 秒向 `255.255.255.255` 与各网卡定向广播地址发送信标；手机端广播 `DISCOVER` 时电视端立即单播应答。
   - 报文格式兼容两种写法：`"LFT1" + JSON` 前缀形式，或纯 JSON（含 `"magic":"LFT1"` 字段）。
-  - 报文示例：`{"magic":"LFT1","t":"announce","v":1,"name":"局域网电视 (VIDAA_TV)","device_id":"...","ip":"192.168.50.189","tcp_port":41235,"http_port":9527}`
+  - 报文示例：`{"magic":"LFT1","t":"announce","v":1,"name":"局域网电视","device_id":"...","ip":"192.168.1.100","tcp_port":41235,"http_port":9527}`
 - **二维码**：电视端屏幕显示 `http://<IP>:9527`，手机浏览器扫码即传（零安装）。
 
 ### 传输层 A：TCP（控制端口 41235 / 数据端口 41236）
@@ -266,14 +266,14 @@ bash ../verify_kotlin_http.sh
 
 ```bash
 # 一键联调：安装 TV APK → 启动服务 → 双通道端到端验证 → 校验落盘哈希 → 清理
-bash live_verify.sh 192.168.50.189
+bash live_verify.sh 192.168.1.100
 ```
 
 ### 压测（大文件 / 断点续传 / 大量文件）
 
 ```bash
 # 对真实电视端压测：300MB 大文件 + 断点续传 + 60 个文件并发上传与排序
-python stress_test.py --host 192.168.50.189 --port 9527 --adb 192.168.50.189:5555
+python stress_test.py --host 192.168.1.100 --port 9527 --adb 192.168.1.100:5555
 ```
 
 实测结果见第二节「压测」表。
@@ -283,10 +283,10 @@ python stress_test.py --host 192.168.50.189 --port 9527 --adb 192.168.50.189:555
 端到端测试，并用 `sha256sum` 核对电视端落盘文件。
 
 ### 验证边界
-- **已在真机验证**（VIDAA_TV / Android 9）：UDP 自动发现、TCP 通道多文件并发传输、
+- **已在真机验证**（Android 9 电视设备）：UDP 自动发现、TCP 通道多文件并发传输、
   整文件 SHA-256 一致性、HTTP 通道 13/13、错误哈希拒绝。
 - **尚未验证**：Android 手机端 App 与 Android 电视端之间的 **NSD 自动发现**链路
-  （本沙箱无 Android 手机设备；但两端代码共用同一套 NSD 服务类型与 TXT 记录格式，
+  （测试环境无 Android 手机设备；但两端代码共用同一套 NSD 服务类型与 TXT 记录格式，
   且 UDP 通道已验证可跨语言互通）。
 
 ---

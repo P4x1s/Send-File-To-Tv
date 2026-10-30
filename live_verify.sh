@@ -3,7 +3,7 @@
 # 局域网文件传输工具 —— 真机联调一键脚本
 #
 # 用法：
-#   bash live_verify.sh                      # 自动探测（电视 192.168.50.189）
+#   bash live_verify.sh                      # 自动探测（电视 192.168.1.100）
 #   bash live_verify.sh <电视IP> [手机IP]     # 指定设备
 #
 # 流程：
@@ -17,13 +17,31 @@
 # =============================================================================
 set -u
 
-TV_IP="${1:-192.168.50.189}"
-PHONE_IP="${2:-192.168.50.65}"
+TV_IP="${1:-192.168.1.100}"
+PHONE_IP="${2:-192.168.1.2}"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BIN="/c/Users/Administrator/.workbuddy/binaries"
-ADB="$BIN/android-sdk/platform-tools/adb.exe"
-PY="$BIN/python/versions/3.13.12/python.exe"
+
+# 工具链定位：优先 PATH，其次 $TOOLS_HOME，最后 Android SDK 常见位置
+find_adb() {
+  if command -v adb >/dev/null 2>&1; then command -v adb; return; fi
+  for c in "$TOOLS_HOME/android-sdk/platform-tools/adb.exe" \
+           "$ANDROID_HOME/platform-tools/adb.exe" \
+           "$HOME/Android/Sdk/platform-tools/adb"; do
+    [ -n "$c" ] && [ -x "$c" ] && { echo "$c"; return; }
+  done
+}
+find_python() {
+  if command -v python >/dev/null 2>&1; then command -v python; return; fi
+  if command -v python3 >/dev/null 2>&1; then command -v python3; return; fi
+  for c in "$TOOLS_HOME"/python/versions/*/python.exe; do
+    [ -x "$c" ] && { echo "$c"; return; }
+  done
+}
+ADB="$(find_adb)"
+PY="$(find_python)"
+[ -n "$ADB" ] || { echo "[FAIL] 找不到 adb（请安装 Android SDK Platform Tools 或设置 TOOLS_HOME）"; exit 1; }
+[ -n "$PY" ]  || { echo "[FAIL] 找不到 python（请安装 Python 3.8+ 或设置 TOOLS_HOME）"; exit 1; }
 TV_APK="$ROOT/android/tv/build/outputs/apk/debug/tv-debug.apk"
 PHONE_APK="$ROOT/android/phone/build/outputs/apk/debug/phone-debug.apk"
 

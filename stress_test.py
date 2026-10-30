@@ -13,7 +13,7 @@
   4. 断点续传在**真实设备**上的表现：中断 -> 重连 -> 只补传缺失分片。
 
 用法：
-    python stress_test.py --host 192.168.50.189 --port 9527 [--big-mb 300] [--many 60]
+    python stress_test.py --host 192.168.1.100 --port 9527 [--big-mb 300] [--many 60]
 """
 
 import argparse
