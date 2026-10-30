@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SEND FILE TO TV</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container { width: 100%; max-width: 620px; }
+
+        .header { text-align: center; margin-bottom: 26px; padding-top: 16px; }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #E94560, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .header p { color: #b0b0b0; font-size: 14px; }
+
+        .upload-zone {
+            border: 2px dashed #3a3a5a;
+            border-radius: 16px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .3s ease;
+            background: rgba(35, 39, 53, .5);
+            margin-bottom: 24px;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: #E94560;
+            background: rgba(233, 69, 96, .1);
+        }
+
+        .upload-icon { font-size: 48px; margin-bottom: 12px; }
+        .upload-zone h3 { font-size: 18px; margin-bottom: 8px; }
+        .upload-zone p { color: #b0b0b0; font-size: 13px; }
+
+        #fileInput { display: none; }
+
+        .file-list { display: flex; flex-direction: column; gap: 12px; }
+
+        .file-item {
+            background: rgba(35, 39, 53, .8);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .file-item-header { display: flex; justify-content: space-between; align-items: center; }
+
+        .file-name {
+            font-size: 14px;
+            font-weight: 500;
+            word-break: break-all;
+            flex: 1;
+            margin-right: 12px;
+        }
+
+        .file-size { color: #b0b0b0; font-size: 12px; white-space: nowrap; }
+
+        .progress-container { display: flex; align-items: center; gap: 10px; }
+
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #E94560, #ff6b6b);
+            border-radius: 3px;
+            transition: width .3s ease;
+            width: 0%;
+        }
+
+        .progress-text { font-size: 12px; color: #b0b0b0; min-width: 40px; text-align: right; }
+
+        .file-status { font-size: 12px; padding: 2px 8px; border-radius: 4px; }
+
+        .status-uploading { color: #E94560; }
+        .status-success { color: #4CAF50; }
+        .status-error { color: #ff5252; }
+        .status-cancelled { color: #b0b0b0; }
+        .status-installing { color: #FF9800; }
+        .status-resumed { color: #4ECDC4; }
+
+        .btn-cancel {
+            background: rgba(233, 69, 96, .2);
+            color: #E94560;
+            border: 1px solid #E94560;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all .2s;
+            margin-left: 10px;
+        }
+
+        .btn-cancel:hover { background: #E94560; color: #fff; }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: #b0b0b0; }
+
+        .empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: .5; }
+
+        .sha-text {
+            font-size: 11px;
+            color: #6f6f8a;
+            word-break: break-all;
+            font-family: ui-monospace, Menlo, Consolas, monospace;
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 12px; }
+            .header h1 { font-size: 24px; }
+            .upload-zone { padding: 30px 16px; }
+        }
+
+    /* ===== 手机遥控器 ===== */
+    .remote-panel {
+        margin-top: 24px;
+        padding: 16px;
+        background: #232735;
+        border-radius: 12px;
+        border: 1px solid #33374d;
+    }
+    .remote-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+    }
+    .remote-title { font-size: 15px; font-weight: bold; color: #4ECDC4; }
+    .remote-focus {
+        font-size: 13px;
+        color: #b0b0b0;
+        max-width: 60%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .remote-dpad {
+        display: grid;
+        grid-template-areas:
+            ".    up   ."
+            "left ok   right"
+            ".    down .";
+        grid-template-columns: repeat(3, 64px);
+        grid-template-rows: repeat(3, 56px);
+        gap: 8px;
+        justify-content: center;
+    }
+    .rbtn {
+        background: #2E3350;
+        color: #fff;
+        border: 1px solid #4a5070;
+        border-radius: 10px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        transition: background .12s, transform .12s;
+    }
+    .rbtn:active { background: #E94560; transform: scale(.94); }
+    .rbtn-up    { grid-area: up; }
+    .rbtn-down  { grid-area: down; }
+    .rbtn-left  { grid-area: left; }
+    .rbtn-right { grid-area: right; }
+    .rbtn-ok    { grid-area: ok; background: #2E7D32; border-color: #4CAF50; }
+    .remote-actions {
+        display: flex;
+        justify-content: center;
+        margin-top: 12px;
+    }
+    .rbtn-back { padding: 10px 26px; font-size: 15px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>SEND FILE TO TV</h1>
+        <p>选择或拖拽文件到下方区域上传</p>
+    </div>
+
+    <div class="upload-zone" id="uploadZone">
+        <div class="upload-icon">📁</div>
+        <h3>点击或拖拽文件到此处</h3>
+        <p>支持任意大小与格式，分块并发上传，最多 5 个文件同时传输，断网可续传</p>
+        <input type="file" id="fileInput" multiple>
+    </div>
+
+    <div class="file-list" id="fileList"></div>
+
+    <div class="empty-state" id="emptyState">
+        <div class="icon">📭</div>
+        <p>暂无上传记录</p>
+    </div>
+
+    <!-- 手机遥控器：把手机当作遥控器操作电视 -->
+    <div class="remote-panel" id="remotePanel">
+        <div class="remote-header">
+            <span class="remote-title">📱 手机遥控器</span>
+            <span class="remote-focus" id="remoteFocus">电视端未选中任何项</span>
+        </div>
+        <div class="remote-dpad">
+            <button class="rbtn rbtn-up" data-key="up" aria-label="上">▲</button>
+            <button class="rbtn rbtn-left" data-key="left" aria-label="左">◀</button>
+            <button class="rbtn rbtn-ok" data-key="ok" aria-label="确认">OK</button>
+            <button class="rbtn rbtn-right" data-key="right" aria-label="右">▶</button>
+            <button class="rbtn rbtn-down" data-key="down" aria-label="下">▼</button>
+        </div>
+        <div class="remote-actions">
+            <button class="rbtn rbtn-back" data-key="back">返回</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileList = document.getElementById('fileList');
+    const emptyState = document.getElementById('emptyState');
+
+    // ===== 手机遥控器 =====
+    // 把手机当作电视遥控器：按键经 /api/remote/key 转发到 TV 端，
+    // 由 TV 端派发真实的 KeyEvent，因此行为与电视自带遥控器完全一致。
+    const remoteFocus = document.getElementById('remoteFocus');
+
+    async function sendRemoteKey(key) {
+        try {
+            const resp = await fetch('/api/remote/key?key=' + encodeURIComponent(key), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: key })
+            });
+            const data = await resp.json();
+            updateRemoteFocus(data);
+        } catch (e) {
+            remoteFocus.textContent = '遥控连接失败: ' + e.message;
+        }
+    }
+
+    function updateRemoteFocus(data) {
+        if (!data) return;
+        const focus = data.focus || '';
+        const count = data.count !== undefined ? data.count : null;
+        remoteFocus.textContent = focus
+            ? (count !== null ? `电视端选中：${focus}（共 ${count} 项）` : `电视端选中：${focus}`)
+            : (count !== null ? `电视端未选中任何项（共 ${count} 项）` : '电视端未选中任何项');
+    }
+
+    async function pollRemoteState() {
+        try {
+            const resp = await fetch('/api/remote/state', { cache: 'no-store' });
+            updateRemoteFocus(await resp.json());
+        } catch (e) {
+            /* 电视端离线时静默重试 */
+        }
+    }
+
+    document.querySelectorAll('.rbtn[data-key]').forEach(btn => {
+        btn.addEventListener('click', () => sendRemoteKey(btn.dataset.key));
+    });
+
+    // 首次进入时同步一次焦点，之后每 2 秒轮询（电视端焦点可能因物理遥控器而改变）
+    pollRemoteState();
+    setInterval(pollRemoteState, 2000);
+
+    // 分块大小：与服务端协商后为准（init 响应会回传 chunk_size）。
+    // 小文件 1 MiB 保证进度观感，大文件 4 MiB 降低请求开销（50GB 仅 12800 个请求）。
+    const CHUNK_SIZE_SMALL = 1024 * 1024;
+    const CHUNK_SIZE_LARGE = 4 * 1024 * 1024;
+    const SMALL_FILE_LIMIT = 64 * 1024 * 1024;
+    const CONCURRENCY = 4;            // 单文件内部的分块并发数
+    const MAX_FILES = 5;              // 最多同时上传的文件数
+
+    let uploadItems = [];
+    let activeFiles = 0;
+    const pendingQueue = [];
+
+    document.addEventListener('paste', (e) => {
+        const files = e.clipboardData?.files;
+        if (files && files.length > 0) handleFiles(files);
+    });
+
+    uploadZone.addEventListener('click', () => fileInput.click());
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+        fileInput.value = '';
+    });
+
+    function handleFiles(files) {
+        for (const file of files) {
+            enqueueFile(file);
+        }
+        pumpQueue();
+    }
+
+    /** 文件级排队：最多 MAX_FILES 个文件同时上传。 */
+    function enqueueFile(file) {
+        pendingQueue.push(file);
+    }
+
+    function pumpQueue() {
+        while (activeFiles < MAX_FILES && pendingQueue.length > 0) {
+            const file = pendingQueue.shift();
+            activeFiles++;
+            uploadFile(file).finally(() => {
+                activeFiles--;
+                pumpQueue();
+            });
+        }
+    }
+
+    /** 计算稳定文件 ID：同一份文件重复上传时保持一致，电视端据此续传。 */
+    function fileIdOf(file) {
+        const raw = file.name + '|' + file.size + '|' + (file.lastModified || 0);
+        // 简单 FNV-1a 哈希（仅用于定位，完整性与正式哈希无关）
+        let h = 0x811c9dc5;
+        for (let i = 0; i < raw.length; i++) {
+            h ^= raw.charCodeAt(i);
+            h = Math.imul(h, 0x01000193) >>> 0;
+        }
+        return h.toString(16).padStart(8, '0') + '-' + file.size;
+    }
+
+    /**
+     * 上传单个文件：init -> 并发分块 -> commit
+     * 服务端会做逐片 SHA-256 校验（原生 App 通道还会做整文件校验）。
+     */
+    async function uploadFile(file) {
+        const id = 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        const chunkSize = file.size <= SMALL_FILE_LIMIT ? CHUNK_SIZE_SMALL : CHUNK_SIZE_LARGE;
+        const item = {
+            id: id,
+            name: file.name,
+            size: file.size,
+            progress: 0,
+            status: 'uploading',
+            uploaded: 0,
+            aborted: false,
+            sha: null
+        };
+        uploadItems.unshift(item);
+        renderFileList();
+
+        try {
+            // 1) 创建/恢复上传会话
+            const chunkCount = Math.max(1, Math.ceil(file.size / chunkSize));
+            const initResp = await fetch('/api/upload/init', {
+                method: 'POST',
+                headers: {
+                    'X-Lan-Name': encodeURIComponent(file.name),
+                    'X-Lan-Total-Size': String(file.size),
+                    'X-Lan-Chunk-Count': String(chunkCount),
+                    'X-Lan-Chunk-Size': String(chunkSize),
+                    'X-Lan-File-Id': fileIdOf(file)
+                }
+            });
+            if (!initResp.ok) throw new Error('init failed: ' + initResp.status);
+            const init = await initResp.json();
+            const session = init.session;
+            const realChunkSize = init.chunk_size || chunkSize;
+            const realChunkCount = Math.max(1, Math.ceil(file.size / realChunkSize));
+
+            // 断点续传：服务端回传已收分块位图（base64 的 BitSet）
+            const skip = decodeBitmap(init.received_b64 || '', realChunkCount);
+            const skipped = skip.filter(x => x).length;
+            if (skipped > 0) {
+                item.uploaded = skipped * realChunkSize;
+                item.progress = Math.round((item.uploaded * 100) / file.size);
+                item.status = 'resumed';
+                updateProgress(item.id, item.progress);
+            }
+
+            // 2) 并发上传分块（跳过服务端已有的分片）
+            let nextIndex = 0;
+            const workers = [];
+            const workerCount = Math.min(CONCURRENCY, realChunkCount);
+            for (let w = 0; w < workerCount; w++) {
+                workers.push((async () => {
+                    while (true) {
+                        const index = nextIndex++;
+                        if (index >= realChunkCount || item.aborted) return;
+                        if (skip[index]) continue;   // 断点续传：只补传缺失分片
+                        const start = index * realChunkSize;
+                        const end = Math.min(start + realChunkSize, file.size);
+                        const blob = file.slice(start, end);
+                        const resp = await fetch('/api/upload/chunk', {
+                            method: 'POST',
+                            headers: {
+                                'X-Lan-Session': session,
+                                'X-Lan-Index': String(index),
+                                'X-Lan-Size': String(end - start),
+                                'X-Lan-Offset': String(start)
+                            },
+                            body: blob
+                        });
+                        if (!resp.ok) throw new Error('chunk ' + index + ' failed: ' + resp.status);
+                        item.uploaded += (end - start);
+                        item.progress = Math.round((item.uploaded * 100) / file.size);
+                        item.status = 'uploading';
+                        updateProgress(item.id, item.progress);
+                    }
+                })());
+            }
+            await Promise.all(workers);
+            if (item.aborted) return;
+
+            // 3) 提交合并
+            const commitResp = await fetch('/api/upload/commit', {
+                method: 'POST',
+                headers: { 'X-Lan-Commit-Session': session }
+            });
+            const commit = await commitResp.json();
+            if (!commitResp.ok || !commit.ok) throw new Error(commit.error || 'commit failed');
+
+            item.progress = 100;
+            item.sha = commit.sha256;
+            item.status = file.name.toLowerCase().endsWith('.apk') ? 'installing' : 'success';
+        } catch (e) {
+            if (item.aborted) {
+                item.status = 'cancelled';
+            } else {
+                item.status = 'error';
+                item.error = e.message;
+            }
+        }
+        renderFileList();
+    }
+
+    /** base64 -> BitSet 位图（与 Java BitSet.toByteArray 字节序一致：低位在前）。 */
+    function decodeBitmap(b64, chunkCount) {
+        const bits = new Uint8Array(Math.ceil(chunkCount / 8));
+        if (!b64) return bits;
+        try {
+            const bin = atob(b64);
+            for (let i = 0; i < bin.length; i++) {
+                bits[i] = bin.charCodeAt(i);
+            }
+        } catch (e) {
+            /* 位图解析失败则全部重传 */
+        }
+        return bits;
+    }
+
+    function updateProgress(itemId, progress) {
+        const fill = document.querySelector(`[data-id="${itemId}"] .progress-fill`);
+        const text = document.querySelector(`[data-id="${itemId}"] .progress-text`);
+        if (fill) fill.style.width = progress + '%';
+        if (text) text.textContent = progress + '%';
+    }
+
+    function cancelUpload(itemId) {
+        const item = uploadItems.find(i => i.id === itemId);
+        if (item && item.status === 'uploading') {
+            item.aborted = true;
+            item.status = 'cancelled';
+            renderFileList();
+        }
+    }
+
+    function renderFileList() {
+        if (uploadItems.length === 0) {
+            emptyState.style.display = 'block';
+            fileList.innerHTML = '';
+            return;
+        }
+
+        emptyState.style.display = 'none';
+        fileList.innerHTML = uploadItems.map(item => {
+            const sizeStr = formatSize(item.size);
+            let statusHtml = '';
+
+            switch (item.status) {
+                case 'uploading':
+                    statusHtml = `
+                        <div style="display: flex; align-items: center;">
+                            <span class="file-status status-uploading">上传中</span>
+                            <button class="btn-cancel" onclick="cancelUpload('${item.id}')">取消</button>
+                        </div>`;
+                    break;
+                case 'resumed':
+                    statusHtml = `
+                        <div style="display: flex; align-items: center;">
+                            <span class="file-status status-resumed">断点续传中</span>
+                            <button class="btn-cancel" onclick="cancelUpload('${item.id}')">取消</button>
+                        </div>`;
+                    break;
+                case 'success':
+                    statusHtml = `<span class="file-status status-success">已完成</span>`;
+                    break;
+                case 'error':
+                    statusHtml = `<span class="file-status status-error">失败</span>`;
+                    break;
+                case 'cancelled':
+                    statusHtml = `<span class="file-status status-cancelled">已取消</span>`;
+                    break;
+                case 'installing':
+                    statusHtml = `<span class="file-status status-installing">安装中</span>`;
+                    break;
+            }
+
+            const progressDisplay = (item.status === 'uploading' || item.status === 'resumed') ? 'flex' : 'none';
+            const shaHtml = item.sha
+                ? `<div class="sha-text">SHA-256: ${escapeHtml(item.sha)}</div>`
+                : '';
+            const errHtml = item.error
+                ? `<div class="sha-text" style="color:#ff5252">${escapeHtml(item.error)}</div>`
+                : '';
+
+            return `
+                <div class="file-item" data-id="${item.id}">
+                    <div class="file-item-header">
+                        <span class="file-name">${escapeHtml(item.name)}</span>
+                        <span class="file-size">${sizeStr}</span>
+                    </div>
+                    <div class="progress-container" style="display: ${progressDisplay}">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${item.progress}%"></div>
+                        </div>
+                        <span class="progress-text">${item.progress}%</span>
+                    </div>
+                    ${statusHtml}
+                    ${shaHtml}
+                    ${errHtml}
+                </div>`;
+        }).join('');
+    }
+
+    function formatSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+</script>
+</body>
+</html>

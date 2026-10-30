@@ -1,0 +1,22 @@
+<resources>
+    <!-- TV 桌面上的应用名（图标下方文字）：SFTT = Send File To TV -->
+    <string name="app_name">SFTT</string>
+    <!-- 应用内主标题 -->
+    <string name="tv_title">SEND FILE TO TV</string>
+    <!-- 左上角版本标识：SFTT v3.0 -->
+    <string name="tv_version_label">SFTT v3.0</string>
+    <string name="file_list">已接收文件</string>
+    <string name="no_files">暂无接收到的文件\n请用手机扫码或使用手机端应用发送</string>
+    <string name="scan_qr_to_upload">扫码或用手机浏览器打开上方地址即可发送文件</string>
+    <string name="refresh">刷新</string>
+    <string name="clear_list">清空</string>
+    <!-- 清空确认对话框 -->
+    <string name="clear_title">清空列表</string>
+    <string name="clear_message">将清空列表中的 %1$d 个条目。\n\n文件仍保留在电视上，不会被删除。</string>
+    <string name="clear_confirm">清空</string>
+    <string name="cancel">取消</string>
+    <string name="clear_done">已清空 %1$d 个条目，文件仍保留在电视上</string>
+    <string name="clear_done_partial">已清空 %1$d 个条目，%2$d 个上传中的条目已保留</string>
+    <string name="clear_message_partial">将清空列表中的 %1$d 个条目（其中 %2$d 个仍在上传，会予以保留）。\n\n文件仍保留在电视上，不会被删除。</string>
+    <string name="clear_nothing">列表已经是空的</string>
+</resources>

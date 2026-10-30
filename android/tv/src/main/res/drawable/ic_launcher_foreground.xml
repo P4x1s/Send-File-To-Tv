@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!--
+      自适应图标前景：电视 + 向上箭头 + 无线广播弧。
+      内容限制在中心安全区（约 66/108）内，避免被系统裁切。
+    -->
+
+    <!-- 无线广播弧（内） -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round"
+        android:pathData="M45.6,36.5 A14,14 0 0 0 62.4,36.5" />
+
+    <!-- 无线广播弧（外） -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round"
+        android:pathData="M41.4,31.6 A20,20 0 0 0 66.6,31.6" />
+
+    <!-- 电视屏幕（圆角矩形描边） -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.6"
+        android:pathData="M30,42 L30,58 Q30,64 36,64 L72,64 Q78,64 78,58 L78,42 Q78,36 72,36 L36,36 Q30,36 30,42 Z" />
+
+    <!-- 上传箭头（把文件送进电视） -->
+    <path
+        android:fillColor="#FF5A72"
+        android:pathData="M54,41 L62,52 L57,52 L57,60 L51,60 L51,52 L46,52 Z" />
+
+    <!-- 底座：左腿 -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round"
+        android:pathData="M42,64 L35,76" />
+
+    <!-- 底座：右腿 -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round"
+        android:pathData="M66,64 L73,76" />
+
+    <!-- 底座：横杆 -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round"
+        android:pathData="M30,77 L78,77" />
+
+</vector>

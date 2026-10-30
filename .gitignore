@@ -1,0 +1,27 @@
+# ---- Gradle / Android ----
+android/build/
+android/*/build/
+android/.gradle/
+android/local.properties
+.gradle/
+build/
+*.apk.idsig
+*.iml
+
+# ---- IDE ----
+.idea/
+.vscode/
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.venv/
+
+# ---- 运行期临时产物 ----
+_http_live/
+_http_self/
+*.pyc
+
+# ---- 系统文件 ----
+.DS_Store
+Thumbs.db
